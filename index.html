@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DFS Traversal Visualizer</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .demo-section {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .tree-container {
+            display: flex;
+            justify-content: center;
+            margin: 30px 0;
+        }
+
+        .tree {
+            font-family: 'Courier New', monospace;
+            font-size: 18px;
+            line-height: 1.8;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .node {
+            display: inline-block;
+            padding: 8px 12px;
+            margin: 2px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            transition: all 0.5s ease;
+            font-weight: bold;
+        }
+
+        .node.active {
+            background: rgba(255, 215, 0, 0.8);
+            border: 2px solid #ffd700;
+            color: #000;
+            transform: scale(1.2);
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
+        }
+
+        .node.visited {
+            background: rgba(0, 255, 0, 0.4);
+            border: 2px solid #00ff00;
+        }
+
+        .node.processed {
+            background: rgba(0, 100, 255, 0.6);
+            border: 2px solid #0064ff;
+            color: white;
+        }
+
+        .controls {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        button {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            margin: 0 10px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .step-info {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 5px solid #ffd700;
+        }
+
+        .code-section {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .highlight {
+            background: rgba(255, 215, 0, 0.3);
+            padding: 2px 4px;
+            border-radius: 4px;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                background: rgba(255, 215, 0, 0.3);
+            }
+
+            50% {
+                background: rgba(255, 215, 0, 0.6);
+            }
+
+            100% {
+                background: rgba(255, 215, 0, 0.3);
+            }
+        }
+
+        .result {
+            font-size: 18px;
+            font-weight: bold;
+            text-align: center;
+            padding: 15px;
+            background: rgba(0, 255, 0, 0.2);
+            border-radius: 10px;
+            margin: 15px 0;
+            border: 2px solid rgba(0, 255, 0, 0.4);
+        }
+
+        .call-stack {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+            min-height: 100px;
+        }
+
+        .stack-frame {
+            background: rgba(138, 43, 226, 0.3);
+            border: 1px solid rgba(138, 43, 226, 0.6);
+            border-radius: 5px;
+            padding: 8px;
+            margin: 5px 0;
+            font-family: 'Courier New', monospace;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🌳 DFS Binary Tree Traversal</h1>
+
+        <div class="demo-section">
+            <h2>Your Code Explained</h2>
+            <div class="code-section">
+                <pre id="code-display">def dfs(root):
+    if not root:          # Base case: if node is None, return
+        return
+    dfs(root.left)        # Recursively visit left subtree
+    res.append(root.val)  # Process current node (inorder)
+    dfs(root.right)       # Recursively visit right subtree</pre>
+            </div>
+        </div>
+
+        <div class="demo-section">
+            <h2>Sample Tree Structure</h2>
+            <div class="tree-container">
+                <div class="tree">
+                    <span class="node" id="node-1">1</span><br>
+                    / \<br>
+                    <span class="node" id="node-2">2</span> <span class="node" id="node-3">3</span><br>
+                    / \<br>
+                    <span class="node" id="node-4">4</span> <span class="node" id="node-5">5</span>
+                </div>
+            </div>
+
+            <div class="controls">
+                <button onclick="startTraversal()" id="start-btn">Start Auto DFS Traversal</button>
+                <button onclick="pauseTraversal()" id="pause-btn" disabled>Pause</button>
+                <button onclick="reset()" id="reset-btn">Reset</button>
+                <div style="margin-top: 15px;">
+                    <label for="speed-slider" style="margin-right: 10px;">Speed:</label>
+                    <input type="range" id="speed-slider" min="500" max="2000" value="1000" style="margin-right: 10px;">
+                    <span id="speed-display">1.0s</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="demo-section">
+            <div class="step-info" id="step-info">
+                Click "Start DFS Traversal" to see how your code works step by step!
+            </div>
+
+            <div id="result-display" class="result" style="display: none;">
+                Final Result: []
+            </div>
+        </div>
+
+        <div class="demo-section">
+            <h3>📚 Call Stack (What's happening "under the hood")</h3>
+            <div class="call-stack" id="call-stack">
+                The call stack will show here when you start the traversal...
+            </div>
+        </div>
+
+        <div class="demo-section">
+            <h2>Key Insights</h2>
+            <p><strong>1. Recursion Magic:</strong> When you call <code>dfs(root)</code>, it creates a "chain reaction"
+                of function calls.</p>
+            <p><strong>2. Call Stack:</strong> Each recursive call gets added to the call stack. Python remembers where
+                it was and what to do next.</p>
+            <p><strong>3. Base Case:</strong> <code>if not root: return</code> stops the recursion when we hit a None
+                node.</p>
+            <p><strong>4. Inorder Pattern:</strong> Left → Process → Right gives you sorted order for a BST!</p>
+        </div>
+    </div>
+
+    <script>
+        let currentStep = 0;
+        let steps = [];
+        let result = [];
+        let callStack = [];
+        let autoPlay = false;
+        let autoPlayTimer = null;
+        let speed = 1000; // milliseconds
+
+        // Update speed display
+        document.getElementById('speed-slider').addEventListener('input', function (e) {
+            speed = parseInt(e.target.value);
+            document.getElementById('speed-display').textContent = (speed / 1000).toFixed(1) + 's';
+        });
+
+        // Define our tree structure
+        const tree = {
+            val: 1,
+            left: {
+                val: 2,
+                left: { val: 4, left: null, right: null },
+                right: { val: 5, left: null, right: null }
+            },
+            right: { val: 3, left: null, right: null }
+        };
+
+        function generateSteps() {
+            steps = [];
+            result = [];
+            callStack = [];
+
+            function dfs(node, depth = 0) {
+                const indent = "  ".repeat(depth);
+
+                // Push call onto stack
+                callStack.push(`dfs(${node ? node.val : 'null'})`);
+                steps.push({
+                    action: `${indent}📞 Calling dfs(${node ? node.val : 'null'})`,
+                    callStack: [...callStack],
+                    result: [...result],
+                    highlight: node ? node.val : null,
+                    nodeState: 'active'
+                });
+
+                if (!node) {
+                    steps.push({
+                        action: `${indent}🛑 Node is null, returning`,
+                        callStack: [...callStack],
+                        result: [...result],
+                        highlight: null,
+                        nodeState: 'none'
+                    });
+                    callStack.pop();
+                    return;
+                }
+
+                // Go left
+                steps.push({
+                    action: `${indent}⬅️ Going to left child of ${node.val}`,
+                    callStack: [...callStack],
+                    result: [...result],
+                    highlight: node.val,
+                    nodeState: 'visited'
+                });
+
+                if (node.left) {
+                    dfs(node.left, depth + 1);
+                } else {
+                    callStack.push('dfs(null)');
+                    steps.push({
+                        action: `${indent}  📞 Calling dfs(null) for left child`,
+                        callStack: [...callStack],
+                        result: [...result],
+                        highlight: node.val,
+                        nodeState: 'visited'
+                    });
+                    steps.push({
+                        action: `${indent}  🛑 Left child is null, returning`,
+                        callStack: [...callStack],
+                        result: [...result],
+                        highlight: node.val,
+                        nodeState: 'visited'
+                    });
+                    callStack.pop();
+                }
+
+                // Process current
+                result.push(node.val);
+                steps.push({
+                    action: `${indent}✅ Processing node ${node.val}, adding to result`,
+                    callStack: [...callStack],
+                    result: [...result],
+                    highlight: node.val,
+                    nodeState: 'processed'
+                });
+
+                // Go right
+                steps.push({
+                    action: `${indent}➡️ Going to right child of ${node.val}`,
+                    callStack: [...callStack],
+                    result: [...result],
+                    highlight: node.val,
+                    nodeState: 'visited'
+                });
+
+                if (node.right) {
+                    dfs(node.right, depth + 1);
+                } else {
+                    callStack.push('dfs(null)');
+                    steps.push({
+                        action: `${indent}  📞 Calling dfs(null) for right child`,
+                        callStack: [...callStack],
+                        result: [...result],
+                        highlight: node.val,
+                        nodeState: 'visited'
+                    });
+                    steps.push({
+                        action: `${indent}  🛑 Right child is null, returning`,
+                        callStack: [...callStack],
+                        result: [...result],
+                        highlight: node.val,
+                        nodeState: 'visited'
+                    });
+                    callStack.pop();
+                }
+
+                // Return from this call
+                steps.push({
+                    action: `${indent}🔙 Finished with node ${node.val}, returning`,
+                    callStack: [...callStack],
+                    result: [...result],
+                    highlight: node.val,
+                    nodeState: 'processed'
+                });
+                callStack.pop();
+            }
+
+            dfs(tree);
+        }
+
+        function startTraversal() {
+            generateSteps();
+            currentStep = 0;
+            autoPlay = true;
+            document.getElementById('start-btn').disabled = true;
+            document.getElementById('pause-btn').disabled = false;
+            document.getElementById('result-display').style.display = 'none';
+
+            // Clear all node styles
+            clearNodeStyles();
+
+            showStep();
+            autoPlayNext();
+        }
+
+        function autoPlayNext() {
+            if (!autoPlay) return;
+
+            autoPlayTimer = setTimeout(() => {
+                if (currentStep < steps.length - 1) {
+                    currentStep++;
+                    showStep();
+                    autoPlayNext();
+                } else {
+                    // Traversal complete
+                    autoPlay = false;
+                    document.getElementById('pause-btn').disabled = true;
+                    document.getElementById('result-display').style.display = 'block';
+                    document.getElementById('result-display').textContent = `🎉 Final Result: [${result.join(', ')}]`;
+                }
+            }, speed);
+        }
+
+        function pauseTraversal() {
+            autoPlay = false;
+            if (autoPlayTimer) {
+                clearTimeout(autoPlayTimer);
+            }
+            document.getElementById('start-btn').disabled = false;
+            document.getElementById('pause-btn').disabled = true;
+        }
+
+        function clearNodeStyles() {
+            for (let i = 1; i <= 5; i++) {
+                const node = document.getElementById(`node-${i}`);
+                node.className = 'node';
+            }
+        }
+
+        function updateNodeVisual(nodeVal, state) {
+            if (!nodeVal) return;
+
+            const nodeElement = document.getElementById(`node-${nodeVal}`);
+            if (nodeElement) {
+                nodeElement.className = `node ${state}`;
+            }
+        }
+
+        function showStep() {
+            const step = steps[currentStep];
+
+            // Update node visualization
+            clearNodeStyles();
+            if (step.highlight && step.nodeState !== 'none') {
+                updateNodeVisual(step.highlight, step.nodeState);
+            }
+
+            // Show all processed nodes
+            step.result.forEach(val => {
+                const nodeElement = document.getElementById(`node-${val}`);
+                if (nodeElement && !nodeElement.classList.contains('active')) {
+                    nodeElement.classList.add('processed');
+                }
+            });
+
+            document.getElementById('step-info').innerHTML = `
+                <strong>Step ${currentStep + 1} of ${steps.length}:</strong> ${step.action}<br>
+                <strong>Current Result:</strong> [${step.result.join(', ')}]
+            `;
+
+            // Update call stack display
+            const callStackDiv = document.getElementById('call-stack');
+            callStackDiv.innerHTML = '<h4>Current Call Stack:</h4>';
+            if (step.callStack.length === 0) {
+                callStackDiv.innerHTML += '<p style="color: #ccc; font-style: italic;">Call stack is empty</p>';
+            } else {
+                step.callStack.forEach((call, index) => {
+                    const frame = document.createElement('div');
+                    frame.className = 'stack-frame';
+                    frame.textContent = `${step.callStack.length - index}. ${call}`;
+                    callStackDiv.appendChild(frame);
+                });
+            }
+        }
+
+        function reset() {
+            autoPlay = false;
+            if (autoPlayTimer) {
+                clearTimeout(autoPlayTimer);
+            }
+            currentStep = 0;
+            steps = [];
+            result = [];
+            callStack = [];
+            document.getElementById('start-btn').disabled = false;
+            document.getElementById('pause-btn').disabled = true;
+            document.getElementById('result-display').style.display = 'none';
+            document.getElementById('step-info').innerHTML = 'Click "Start Auto DFS Traversal" to see how your code works step by step!';
+            document.getElementById('call-stack').innerHTML = 'The call stack will show here when you start the traversal...';
+            clearNodeStyles();
+        }
+    </script>
+</body>
+
+</html>
